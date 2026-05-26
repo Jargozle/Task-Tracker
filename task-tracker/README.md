@@ -21,6 +21,9 @@ A dynamic, database-driven web application for tracking tasks. Built with PHP, M
 - **JavaScript** (modal interactions, client-side UX)
 - **Railway Servers** (For Hosting Website)
 
+## Open Website
+
+
 ## Setup Instructions (XAMPP)
 
 ### 1. Copy files
