@@ -10,7 +10,10 @@ $uid  = $_SESSION['user_id'];
 
 // Stats
 $stats = [];
-$rows = $conn->query("SELECT status, COUNT(*) as cnt FROM tasks WHERE user_id = $uid GROUP BY status");
+$stmt = $conn->prepare("SELECT status, COUNT(*) as cnt FROM tasks WHERE user_id = ? GROUP BY status");
+$stmt->bind_param("i", $uid);
+$stmt->execute();
+$rows = $stmt->get_result();
 $stats['total'] = 0;
 $map = ['pending' => 0, 'in_progress' => 0, 'completed' => 0];
 while ($r = $rows->fetch_assoc()) { $map[$r['status']] = (int)$r['cnt']; }
@@ -21,15 +24,24 @@ $stats['completed']   = $map['completed'];
 
 // Overdue count
 $today = date('Y-m-d');
-$ov = $conn->query("SELECT COUNT(*) as cnt FROM tasks WHERE user_id=$uid AND status != 'completed' AND due_date < '$today' AND due_date IS NOT NULL");
+$stmt = $conn->prepare("SELECT COUNT(*) as cnt FROM tasks WHERE user_id=? AND status != 'completed' AND due_date < ? AND due_date IS NOT NULL");
+$stmt->bind_param("is", $uid, $today);
+$stmt->execute();
+$ov = $stmt->get_result();
 $stats['overdue'] = $ov->fetch_assoc()['cnt'];
 
 // Recent 5 tasks
-$recent = $conn->query("SELECT * FROM tasks WHERE user_id = $uid ORDER BY created_at DESC LIMIT 5");
+$stmt = $conn->prepare("SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC LIMIT 5");
+$stmt->bind_param("i", $uid);
+$stmt->execute();
+$recent = $stmt->get_result();
 
 // Upcoming (due in next 7 days, not completed)
 $week = date('Y-m-d', strtotime('+7 days'));
-$upcoming = $conn->query("SELECT * FROM tasks WHERE user_id=$uid AND status != 'completed' AND due_date BETWEEN '$today' AND '$week' ORDER BY due_date ASC LIMIT 5");
+$stmt = $conn->prepare("SELECT * FROM tasks WHERE user_id=? AND status != 'completed' AND due_date BETWEEN ? AND ? ORDER BY due_date ASC LIMIT 5");
+$stmt->bind_param("iss", $uid, $today, $week);
+$stmt->execute();
+$upcoming = $stmt->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
