@@ -1,4 +1,3 @@
-
 <?php
 // includes/db.php
 $host = getenv('MYSQLHOST')     ?: 'localhost';
