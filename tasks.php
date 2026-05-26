@@ -12,7 +12,7 @@ $today = date('Y-m-d');
 $msg   = '';
 $error = '';
 
-// ── DELETE ──────────────────────────────────────────────────────────────────
+// ── DELETE ───────────────────────────────────────────────────────────
 if (isset($_GET['delete'])) {
     $del_id = (int)$_GET['delete'];
     $stmt = $conn->prepare("DELETE FROM tasks WHERE id = ? AND user_id = ?");
@@ -24,7 +24,7 @@ if (isset($_GET['delete'])) {
     }
 }
 
-// ── MARK COMPLETE ────────────────────────────────────────────────────────────
+// ── MARK COMPLETE ─────────────────────────────────────────────────────────
 if (isset($_GET['complete'])) {
     $cid = (int)$_GET['complete'];
     $stmt = $conn->prepare("UPDATE tasks SET status='completed' WHERE id=? AND user_id=?");
@@ -34,7 +34,7 @@ if (isset($_GET['complete'])) {
     }
 }
 
-// ── ADD ──────────────────────────────────────────────────────────────────────
+// ── ADD ────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'add') {
     $title    = trim($_POST['title']       ?? '');
     $desc     = trim($_POST['description'] ?? '');
@@ -66,7 +66,7 @@ if (isset($_GET['edit'])) {
     $edit_task = $stmt->get_result()->fetch_assoc();
 }
 
-// ── UPDATE ───────────────────────────────────────────────────────────────────
+// ── UPDATE ───────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'update') {
     $tid      = (int)($_POST['task_id']      ?? 0);
     $title    = trim($_POST['title']         ?? '');
@@ -88,14 +88,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['_action'] ?? '') === 'upda
     }
 }
 
-// ── FILTERS ──────────────────────────────────────────────────────────────────
+// ── FILTERS ───────────────────────────────────────────────────────────
 $filter_status   = $_GET['filter_status']   ?? '';
 $filter_priority = $_GET['filter_priority'] ?? '';
 $search          = trim($_GET['search']     ?? '');
 
-$where  = "WHERE user_id = $uid";
-$params = [];
-$types  = '';
+$where  = "WHERE user_id = ?";
+$params = [$uid];
+$types  = 'i';
 
 if ($filter_status)   { $where .= " AND status = ?";   $types .= 's'; $params[] = $filter_status;   }
 if ($filter_priority) { $where .= " AND priority = ?"; $types .= 's'; $params[] = $filter_priority; }
@@ -110,14 +110,10 @@ $sql = "SELECT * FROM tasks $where ORDER BY
     FIELD(priority,'high','medium','low'),
     due_date ASC, created_at DESC";
 
-if ($types) {
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $tasks = $stmt->get_result();
-} else {
-    $tasks = $conn->query($sql);
-}
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$tasks = $stmt->get_result();
 
 // Show add form?
 $show_add = isset($_GET['action']) && $_GET['action'] === 'add';
